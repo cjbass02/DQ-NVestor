@@ -94,8 +94,9 @@ Data is daily candles. The environment:
 ### 3.2 Episodes: month vs year
 
 Config:
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   PortfolioEnv(      tickers=...,      start_date=...,      end_date=...,      initial_cash=100000,      break_by_month=True,      # split into episodes or not      episode_period="month",   # "month" or "year"  )   `
+```
+PortfolioEnv(      tickers=...,      start_date=...,      end_date=...,      initial_cash=100000,      break_by_month=True,      # split into episodes or not      episode_period="month",   # "month" or "year"  )
+```
 
 *   break\_by\_month=False → one long episode from start\_date to end\_date.
     
@@ -112,7 +113,9 @@ Episode boundaries are built from the date series: when (year, month) or year ch
 
 For each stock you define a set of buy/sell percentages:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   buy_sell_percentages = [0.05, 0.1, 0.2, 1.0]  # 5%, 10%, 20%, 100%   `
+```
+buy_sell_percentages = [0.05, 0.1, 0.2, 1.0]  # 5%, 10%, 20%, 100%
+```
 
 This yields 1 + 2 \* len(buy\_sell\_percentages) actions per stock:
 
@@ -125,7 +128,9 @@ This yields 1 + 2 \* len(buy\_sell\_percentages) actions per stock:
 
 The overall action is:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   self.action_space = spaces.MultiDiscrete([actions_per_stock] * n_stocks)   `
+```
+self.action_space = spaces.MultiDiscrete([actions_per_stock] * n_stocks)
+```
 
 So the agent outputs a **vector** of choices, one discrete action per ticker, every day.
 
@@ -153,7 +158,9 @@ On each trading day idx, the environment builds:
 
 Total state dimension:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   state_dim = 4 * n_stocks + 2   `
+```
+state_dim = 4 * n_stocks + 2
+```
 
 ### 3.5 Reward function
 
@@ -162,8 +169,9 @@ Trades execute at **today’s open**.
 Reward is the **portfolio’s open→close return for that day**, plus a diversification bonus.
 
 Core P&L term:
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   current_val = Σ_i (positions[i] * open_prices[tic][idx]) + cash  next_val    = Σ_i (positions[i] * close_prices[tic][idx]) + cash  reward += (next_val - current_val) / current_val   `
+```
+current_val = Σ_i (positions[i] * open_prices[tic][idx]) + cash  next_val    = Σ_i (positions[i] * close_prices[tic][idx]) + cash  reward += (next_val - current_val) / current_val
+```
 
 **Diversification (HHI) bonus:**
 
@@ -187,9 +195,9 @@ Implemented in PyTorch as MultiStockQNetwork:
 
 *   **Input**: full state vector \[batch\_size, state\_dim\].
     
-*   self.shared = nn.Sequential( nn.Linear(state\_dim, 256), nn.ReLU(), nn.Linear(256, 256), nn.ReLU(),)Produces a shared embedding h (\[batch, 256\]) encoding full market + portfolio context.
+*   ```self.shared = nn.Sequential( nn.Linear(state\_dim, 256), nn.ReLU(), nn.Linear(256, 256), nn.ReLU(),)Produces a shared embedding h (\[batch, 256\]) encoding full market + portfolio context.```
     
-*   self.heads = nn.ModuleList( \[nn.Linear(256, actions\_per\_stock) for \_ in range(n\_stocks)\])In forward:h = self.shared(x) # \[batch, 256\]q\_list = \[\]for head in self.heads: q\_i = head(h) # \[batch, actions\_per\_stock\] q\_list.append(q\_i.unsqueeze(1))q\_all = torch.cat(q\_list, dim=1) # \[batch, n\_stocks, actions\_per\_stock\]
+*   ```self.heads = nn.ModuleList( \[nn.Linear(256, actions\_per\_stock) for \_ in range(n\_stocks)\])In forward:h = self.shared(x) # \[batch, 256\]q\_list = \[\]for head in self.heads: q\_i = head(h) # \[batch, actions\_per\_stock\] q\_list.append(q\_i.unsqueeze(1))q\_all = torch.cat(q\_list, dim=1) # \[batch, n\_stocks, actions\_per\_stock\]```
     
 
 Each head sees the same h, but has its own weights → separate Q-values per stock, shared context.
@@ -235,8 +243,9 @@ DQNAgent wraps:
 ### 5.1 Date split
 
 In the notebook:
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   end         = pd.Timestamp.today().normalize()  train_start = end - pd.DateOffset(months=150)  # 150 months ago  train_end   = end - pd.DateOffset(months=12)   # 12 months ago  test_start  = train_end                        # last 12 months  test_end    = end   `
+```
+end         = pd.Timestamp.today().normalize()  train_start = end - pd.DateOffset(months=150)  # 150 months ago  train_end   = end - pd.DateOffset(months=12)   # 12 months ago  test_start  = train_end                        # last 12 months  test_end    = end
+```
 
 *   **Training window**: 150 months ago → 12 months ago.
     
@@ -247,11 +256,14 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 
 **Training environment (older data only):**
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   train_env = PortfolioEnv(      tickers=tickers,      start_date=train_start,      end_date=train_end,      break_by_month=True,      episode_period="month",  # or "year"      initial_cash=100000,      buy_sell_percentages=[0.05, 0.1, 0.2, 1.0],  )   `
+```
+train_env = PortfolioEnv(      tickers=tickers,      start_date=train_start,      end_date=train_end,      break_by_month=True,      episode_period="month",  # or "year"      initial_cash=100000,      buy_sell_percentages=[0.05, 0.1, 0.2, 1.0],  )
+```
 
 **Evaluation environment (last 12 months):**
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   eval_env = PortfolioEnv(      tickers=tickers,      start_date=test_start,      end_date=test_end,      break_by_month=False,  # one long test episode      initial_cash=100000,      buy_sell_percentages=[0.05, 0.1, 0.2, 1.0],  )   `
+```
+eval_env = PortfolioEnv(      tickers=tickers,      start_date=test_start,      end_date=test_end,      break_by_month=False,  # one long test episode      initial_cash=100000,      buy_sell_percentages=[0.05, 0.1, 0.2, 1.0],  )
+```
 
 *   With episode\_period="month" and break\_by\_month=True, each training episode ≈ one calendar month.
     
@@ -262,16 +274,19 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 --------------------------
 
 ### 6.1 Install dependencies
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   pip install -r requirements.txt   `
+```
+pip install -r requirements.txt
+```
 
 Example requirements.txt:
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   gym  torch  numpy  pandas  matplotlib  yfinance   `
+```
+gym  torch  numpy  pandas  matplotlib  yfinance
+```
 
 ### 6.2 Launch the notebook
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   jupyter lab  # or  jupyter notebook   `
+```
+jupyter lab  # or  jupyter notebook
+```
 
 Open notebook.ipynb / notebook\_train\_test\_split.ipynb and run cells in order:
 
